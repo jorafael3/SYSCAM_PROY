@@ -73,7 +73,7 @@ import 'datatables.net-buttons/js/buttons.html5.min'; // Botón para exportar a 
 // import 'datatables.net-buttons/js/buttons.colVis';
 // import 'datatables.net-buttons/js/buttons.html5';
 // import 'datatables.net-buttons-dt/css/buttons.dataTables.css';
-
+//
 var URL_CARGAR_CAMARA = "/incidencias/cargar_camaras";
 var URL_CARGAR_INCIDENCIAS = "/incidencias/cargar_camaras_incidencias";
 var URL_AGREGAR_INCIDENCIA = "/incidencias/agregar_incidencia";
