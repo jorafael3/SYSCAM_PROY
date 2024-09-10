@@ -59,10 +59,12 @@ import 'datatables.net';
 
 var URL_GUARDAR_NUEVA = "/sucursales/nueva_sucursal"
 var URL_CARGAR_SUCURSALES = "/sucursales/cargar_sucursal"
+var URL_CARGAR_SUCURSALES_TIENDAS = "/sucursales/cargar_sucursal_tiendas"
 var URL_CARGAR_SUCURSALES_CAMARAS = "/sucursales/cargar_sucursal_camara"
 var URL_ACTUALIZAR_SUCURSAL = "/sucursales/actualizar_sucursal"
 var URL_GUARDAR_NUEVA_CAMARA = "/sucursales/nueva_sucursal_camara"
 var URL_ACTUALIZAR_SUCURSAL_CAMARA = "/sucursales/actualizar_sucursal_camara"
+var URL_CARGAR_ENCARGADOS = "/sucursales/cargar_encargados"
 
 
 function Nueva_Sucursal() {
@@ -73,7 +75,10 @@ function Nueva_Sucursal() {
     const [EsActualizar, setEsActualizar] = useState(0);
     const [EsActualizarCam, setEsActualizarCam] = useState(0);
 
+    const [Encargados, setEncargados] = useState([]);
+    const [Tiendas, setTiendas] = useState([]);
 
+    const [Tienda, setTienda] = useState('');
     const [Sucursal, setSucursal] = useState('');
     const [Direccion, setDireccion] = useState('');
     const [Telefono, setTelefono] = useState('');
@@ -88,67 +93,51 @@ function Nueva_Sucursal() {
     const [Camara_ubicacion, setCamara_ubicacion] = useState('');
 
 
-    const Guardar_Datos = async () => {
-        let Sucursal = $("#Sucursal").val();
-        let Direccion = $("#Direccion").val();
-        let Telefono = $("#Telefono").val();
-        let Correo = $("#Correo").val();
-        let Encargado = $("#Encargado").val();
 
-        if (Sucursal.trim() == "") {
-            Service.Mensaje("Ingrese un nombre para la sucursal", "", "error");
-            return;
-        }
+    const cargar_encargados = async () => {
+        const datos = await Service.AjaxSendReceive(URL_CARGAR_ENCARGADOS, []);
 
-        if (Telefono.trim() == "") {
-            Service.Mensaje("Ingrese un telefono para la sucursal", "", "error");
-            return;
-        }
-
-        if (Encargado.trim() == "") {
-            Service.Mensaje("Seleccione un encargado para la sucursal", "", "error");
-            return;
-        }
-
-        let param = {
-            SUCURSAL_NOMBRE: Sucursal,
-            SUCURSAL_DIRECCION: Direccion,
-            SUCURSAL_TELEFONO: Telefono,
-            SUCURSAL_ENCARGADO: Correo,
-            SUCURSAL_ENCARGADO: Encargado,
-            CREADO_POR: ""
-        }
-
-        setLoading(true);
-        const datos = await Service.AjaxSendReceive(URL_GUARDAR_NUEVA, param);
-
-        if (datos.data.success) {
-            $("#Sucursal").val("");
-            $("#Direccion").val("");
-            $("#Telefono").val("");
-            $("#Correo").val("");
-            $("#Encargado").val("");
-            Service.Mensaje("Datos Guardados", "", "success");
-            Cargar_Datos();
-        }
-        setLoading(false);
-
-        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
-        //     
-
-        // })
+        setEncargados(datos.data.data);
+        // Llenar_Tabla_Sucursales(datos.data.data)
     }
+
+    const cargar_sucursal_tiendas = async () => {
+        const datos = await Service.AjaxSendReceive(URL_CARGAR_SUCURSALES_TIENDAS, []);
+        console.log('datos: ', datos);
+
+        setTiendas(datos.data.data);
+        // Llenar_Tabla_Sucursales(datos.data.data)
+    }
+
+    const handleSelectChangeTienda = (event) => {
+        setTienda(event.target.value); // Actualiza el estado del encargado seleccionado
+    };
+
+    const handleSelectChange = (event) => {
+        setEncargado(event.target.value); // Actualiza el estado del encargado seleccionado
+    };
+
 
     const Cargar_Datos = async () => {
         const datos = await Service.AjaxSendReceive(URL_CARGAR_SUCURSALES, []);
-
         Llenar_Tabla_Sucursales(datos.data.data)
+    }
+
+    const Cargar_Datos_Camara = async (id) => {
+        let param = {
+            SUCURSAL_ID: id
+        }
+        setLoading(true);
+        const datos = await Service.AjaxSendReceive(URL_CARGAR_SUCURSALES_CAMARAS, param);
+
+        Llenar_Tabla_Sucursales_Camaras(datos.data.data)
+        setLoading(false);
     }
 
     function Llenar_Tabla_Sucursales(data) {
         $('#TABLA_SUCUSALES_SECC').empty();
         let a = `
-        <table id='TABLA_SUCUSALES' class='table table-striped'>
+        <table id='TABLA_SUCUSALES' class='table table-striped nowrap'>
         </table>
         `
         $('#TABLA_SUCUSALES_SECC').append(a);
@@ -177,9 +166,9 @@ function Nueva_Sucursal() {
                     "title": "SUCURSAL",
                     className: "text-start",
                 }, {
-                    "data": "SUCURSAL_ENCARGADO",
+                    "data": "ENCARGADO_NOMBRE",
                     "title": "ENCARGADO",
-                    className: "text-start",
+                    className: "text-start fs-7",
                 }, {
                     data: null,
                     title: "",
@@ -210,9 +199,10 @@ function Nueva_Sucursal() {
         $('#TABLA_SUCUSALES').on('click', 'td.btn_Detalles', function (respuesta) {
             var data = TABLA_.row(this).data();
 
-
+            cargar_encargados();
             setVisible(true);
             setEsActualizar(1);
+            setTienda(data.SUCURSAL_ID);
             setSucursal(data.SUCURSAL_NOMBRE);
             setDireccion(data.SUCURSAL_DIRECCION);
             setTelefono(data.SUCURSAL_TELEFONO);
@@ -225,81 +215,15 @@ function Nueva_Sucursal() {
         $('#TABLA_SUCUSALES').on('click', 'td.btn_camaras', function (respuesta) {
             var data = TABLA_.row($(this).closest('tr')).data();
             setID(data.ID);
+
             setTimeout(() => {
                 Cargar_Datos_Camara(data.ID);
             }, 100);
         });
     }
 
-    function LimpiarCampos() {
-        setSucursal("");
-        setDireccion("");
-        setTelefono("");
-        setCorreo("");
-        setEncargado("");
-        setID("");
-    }
-
-    const Actualizar_Datos = async () => {
-        let Sucursal = $("#Sucursal").val();
-        let Direccion = $("#Direccion").val();
-        let Telefono = $("#Telefono").val();
-        let Correo = $("#Correo").val();
-        let Encargado = $("#Encargado").val();
-
-        if (Sucursal.trim() == "") {
-            Service.Mensaje("Ingrese un nombre para la sucursal", "", "error");
-            return;
-        }
-
-        if (Telefono.trim() == "") {
-            Service.Mensaje("Ingrese un telefono para la sucursal", "", "error");
-            return;
-        }
-
-        if (Encargado.trim() == "") {
-            Service.Mensaje("Seleccione un encargado para la sucursal", "", "error");
-            return;
-        }
-
-        let param = {
-            SUCURSAL_NOMBRE: Sucursal,
-            SUCURSAL_DIRECCION: Direccion,
-            SUCURSAL_TELEFONO: Telefono,
-            SUCURSAL_ENCARGADO: Correo,
-            SUCURSAL_ENCARGADO: Encargado,
-            ID: ID,
-            CREADO_POR: ""
-        }
-
-        setLoading(true);
-        const datos = await Service.AjaxSendReceive(URL_ACTUALIZAR_SUCURSAL, param);
-
-        if (datos.data.success) {
-            Service.Mensaje("Datos Actualizados", "", "success");
-            Cargar_Datos();
-        }
-        setLoading(false);
-
-        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
-        //     
-
-        // })
-    }
-
-    const Cargar_Datos_Camara = async (id) => {
-        let param = {
-            SUCURSAL_ID: id
-        }
-        setLoading(true);
-        const datos = await Service.AjaxSendReceive(URL_CARGAR_SUCURSALES_CAMARAS, param);
-        console.log('datos: ', datos);
-        Llenar_Tabla_Sucursales_Camaras(datos.data.data)
-        setLoading(false);
-    }
-
     function Llenar_Tabla_Sucursales_Camaras(data) {
-        console.log('data: ', data);
+
         $('#TABLA_SUCUSALES_CAMARAS_SECC').empty();
         let a = `
         <table id='TABLA_SUCUSALES_CAMARAS' class='table table-striped'>
@@ -357,7 +281,7 @@ function Nueva_Sucursal() {
 
         $('#TABLA_SUCUSALES_CAMARAS').on('click', 'td.btn_Detalles', function (respuesta) {
             var data = TABLA_.row(this).data();
-            console.log('data: ', data);
+
             setvisibleCam(true);
             setEsActualizarCam(1);
             setCAMARAID(data.ID);
@@ -366,6 +290,154 @@ function Nueva_Sucursal() {
             setCamara_ubicacion(data.CAMARA_UBICACION);
         });
 
+    }
+
+
+    const Actualizar_Datos = async () => {
+        let Sucursal = $("#Sucursal").val();
+        let Direccion = $("#Direccion").val();
+        let Telefono = $("#Telefono").val();
+        let Correo = $("#Correo").val();
+        let Encargado = $("#Encargado").val();
+
+        if (Sucursal.trim() == "") {
+            Service.Mensaje("Ingrese un nombre para la sucursal", "", "error");
+            return;
+        }
+
+        if (Telefono.trim() == "") {
+            Service.Mensaje("Ingrese un telefono para la sucursal", "", "error");
+            return;
+        }
+
+        if (Encargado.trim() == "") {
+            Service.Mensaje("Seleccione un encargado para la sucursal", "", "error");
+            return;
+        }
+
+        let param = {
+            SUCURSAL_NOMBRE: Sucursal,
+            SUCURSAL_DIRECCION: Direccion,
+            SUCURSAL_TELEFONO: Telefono,
+            SUCURSAL_ENCARGADO: Correo,
+            SUCURSAL_ENCARGADO: Encargado,
+            ID: ID,
+            CREADO_POR: ""
+        }
+
+        setLoading(true);
+        const datos = await Service.AjaxSendReceive(URL_ACTUALIZAR_SUCURSAL, param);
+
+        if (datos.data.success) {
+            Service.Mensaje("Datos Actualizados", "", "success");
+            Cargar_Datos();
+        }
+        setLoading(false);
+
+        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
+        //     
+
+        // })
+    }
+
+    const Actualizar_Datos_Camara = async () => {
+        let Cam_nombre = $("#Cam_nombre").val();
+        let Cam_descripcion = $("#Cam_descripcion").val();
+        let Cam_ubicacion = $("#Cam_ubicacion").val();
+
+
+        if (Cam_nombre.trim() == "") {
+            Service.Mensaje("Ingrese un nombre para la camara", "", "error");
+            return;
+        }
+
+        if (Cam_descripcion.trim() == "") {
+            Service.Mensaje("Ingrese una descripcion", "", "error");
+            return;
+        }
+
+        if (Cam_ubicacion.trim() == "") {
+            Service.Mensaje("Ingrese la ubicacion", "", "error");
+            return;
+        }
+
+        let param = {
+            SUCURSAL_ID: ID,
+            CAMARA_ID: CAMARAID,
+            CAMARA_NOMBRE: Cam_nombre,
+            CAMARA_DESCRIPCION: Cam_descripcion,
+            CAMARA_UBICACION: Cam_ubicacion,
+        }
+
+
+        setLoading(true);
+        const datos = await Service.AjaxSendReceive(URL_ACTUALIZAR_SUCURSAL_CAMARA, param);
+
+        if (datos.data.success) {
+            Service.Mensaje("Datos Guardados", "", "success");
+            Cargar_Datos_Camara(ID);
+        } else {
+            Service.Mensaje("Error al guardar", datos.message, "success");
+        }
+        setLoading(false);
+
+        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
+        //     
+
+        // })
+    }
+
+
+    const Guardar_Datos = async () => {
+        let Sucursal = $("#Sucursal").val();
+        let Direccion = $("#Direccion").val();
+        let Telefono = $("#Telefono").val();
+        let Correo = $("#Correo").val();
+        let Encargado = $("#Encargado").val();
+
+        if (Sucursal.trim() == "") {
+            Service.Mensaje("Ingrese un nombre para la sucursal", "", "error");
+            return;
+        }
+
+        if (Telefono.trim() == "") {
+            Service.Mensaje("Ingrese un telefono para la sucursal", "", "error");
+            return;
+        }
+
+        if (Encargado.trim() == "") {
+            Service.Mensaje("Seleccione un encargado para la sucursal", "", "error");
+            return;
+        }
+
+        let param = {
+            SUCURSAL_ID: Tienda,
+            SUCURSAL_NOMBRE: Sucursal,
+            SUCURSAL_DIRECCION: Direccion,
+            SUCURSAL_TELEFONO: Telefono,
+            SUCURSAL_ENCARGADO: Correo,
+            SUCURSAL_ENCARGADO: Encargado,
+        }
+        console.log('param: ', param);
+
+        setLoading(true);
+        const datos = await Service.AjaxSendReceive(URL_GUARDAR_NUEVA, param);
+
+        if (datos.data.success) {
+            $("#Sucursal").val("");
+            $("#Direccion").val("");
+            $("#Telefono").val("");
+            $("#Correo").val("");
+            $("#Encargado").val("");
+            Service.Mensaje("Datos Guardados", "", "success");
+            Cargar_Datos();
+        }
+        setLoading(false);
+
+        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
+        //     
+
+        // })
     }
 
     const Guardar_Datos_Camara = async () => {
@@ -412,52 +484,11 @@ function Nueva_Sucursal() {
         // })
     }
 
-    const Actualizar_Datos_Camara = async () => {
-        let Cam_nombre = $("#Cam_nombre").val();
-        let Cam_descripcion = $("#Cam_descripcion").val();
-        let Cam_ubicacion = $("#Cam_ubicacion").val();
 
-
-        if (Cam_nombre.trim() == "") {
-            Service.Mensaje("Ingrese un nombre para la camara", "", "error");
-            return;
-        }
-
-        if (Cam_descripcion.trim() == "") {
-            Service.Mensaje("Ingrese una descripcion", "", "error");
-            return;
-        }
-
-        if (Cam_ubicacion.trim() == "") {
-            Service.Mensaje("Ingrese la ubicacion", "", "error");
-            return;
-        }
-
-        let param = {
-            SUCURSAL_ID: ID,
-            CAMARA_ID: CAMARAID,
-            CAMARA_NOMBRE: Cam_nombre,
-            CAMARA_DESCRIPCION: Cam_descripcion,
-            CAMARA_UBICACION: Cam_ubicacion,
-        }
-        console.log('param: ', param);
-
-        setLoading(true);
-        const datos = await Service.AjaxSendReceive(URL_ACTUALIZAR_SUCURSAL_CAMARA, param);
-        console.log('datos: ', datos);
-        if (datos.data.success) {
-            Service.Mensaje("Datos Guardados", "", "success");
-            Cargar_Datos_Camara(ID);
-        } else {
-            Service.Mensaje("Error al guardar", datos.message, "success");
-        }
-        setLoading(false);
-
-        // Service.AjaxSendReceiveData(URL_GUARDAR_NUEVA, param, function (x) {
-        //     
-
-        // })
-    }
+    useEffect(() => {
+        Cargar_Datos(); // Llamamos a la función cuando el componente se monta
+        Llenar_Tabla_Sucursales_Camaras([])
+    }, []);
 
     function Limpiar_Campos_Camara() {
         setCAMARAID("");
@@ -466,11 +497,15 @@ function Nueva_Sucursal() {
         setCamara_ubicacion("");
     }
 
+    function LimpiarCampos() {
+        setSucursal("");
+        setDireccion("");
+        setTelefono("");
+        setCorreo("");
+        setEncargado("");
+        setID("");
+    }
 
-    useEffect(() => {
-        Cargar_Datos(); // Llamamos a la función cuando el componente se monta
-        Llenar_Tabla_Sucursales_Camaras([])
-    }, []);
 
     return (
         <>
@@ -488,6 +523,8 @@ function Nueva_Sucursal() {
                                 setVisible(!visible);
                                 setEsActualizar(0);
                                 LimpiarCampos();
+                                cargar_encargados();
+                                cargar_sucursal_tiendas();
                             }} color="success" className="float-end fw-bold text-light">
                                 Nueva Sucursal <CIcon icon={cilPlus} />
                             </CButton>
@@ -530,7 +567,18 @@ function Nueva_Sucursal() {
                     <CModalBody>
                         <div className='col-12'>
                             <div className="mb-3">
-                                <CFormLabel htmlFor="Sucursal">Sucursal Nombre</CFormLabel>
+                                <CFormLabel htmlFor="Sucursal">Sucursal</CFormLabel>
+                                <CFormSelect id='Tienda' value={Tienda} onChange={handleSelectChangeTienda}>
+                                    <option value="">Seleccione una sucursal</option>
+                                    {Tiendas.map((enc) => (
+                                        <option className='fw-bold' key={enc.ID} value={enc.ID}>
+                                            {enc.codigo} - {enc.Nombre}
+                                        </option>
+                                    ))}
+                                </CFormSelect>
+                            </div>
+                            <div className="mb-3">
+                                <CFormLabel htmlFor="Sucursal">Nombre</CFormLabel>
                                 <CFormInput defaultValue={Sucursal} type="text" id="Sucursal" placeholder="" />
                             </div>
                             <div className="mb-3">
@@ -549,11 +597,13 @@ function Nueva_Sucursal() {
                             </div>
                             <div className="col-6 mb-3">
                                 <CFormLabel htmlFor="Encargado">Encargado</CFormLabel>
-                                <CFormSelect id='Encargado' defaultValue={Encargado}>
+                                <CFormSelect id='Encargado' value={Encargado} onChange={handleSelectChange}>
                                     <option value="">Seleccione un encargado</option>
-                                    <option value="1">Encargado 1</option>
-                                    <option value="2">Encargado 2</option>
-                                    <option value="3">Encargado 3</option>
+                                    {Encargados.map((enc) => (
+                                        <option className='fw-bold' key={enc.ID} value={enc.ID}>
+                                            {enc.Nombre} - {enc.Sucursal_nombre}
+                                        </option>
+                                    ))}
                                 </CFormSelect>
                             </div>
                         </div>

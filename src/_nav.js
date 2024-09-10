@@ -15,6 +15,7 @@ import {
   cilSettings,
   cilSpeedometer,
   cilStar,
+  cilUser,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 
@@ -60,13 +61,33 @@ const _nav = [
   // },
   {
     component: CNavGroup,
-    name: 'Sucursales',
-    to: '/sucursales',
+    name: 'Empresa',
+    to: '/empresas',
     icon: <CIcon icon={cilHome} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
+        name: 'Nueva Empresa',
+        to: '/empresas',
+        // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+      },
+      {
+        component: CNavItem,
         name: 'Nueva Sucursal',
+        to: '/sucursales/nuevasucursal',
+        // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
+      },
+    ],
+  },
+  {
+    component: CNavGroup,
+    name: 'Usuarios',
+    to: '/sucursales',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    items: [
+      {
+        component: CNavItem,
+        name: 'Nuevo usuario',
         to: '/sucursales/nuevasucursal',
         // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
       },

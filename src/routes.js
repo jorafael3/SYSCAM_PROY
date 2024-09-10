@@ -52,6 +52,7 @@ const Toasts = React.lazy(() => import('./views/notifications/toasts/Toasts'))
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
 
+const Empresas = React.lazy(() => import('./views/empresas'))
 const NuevaSucursales = React.lazy(() => import('./views/sucursales/nuevasucursal'))
 const Incidencias = React.lazy(() => import('./views/incidencias'))
 
@@ -67,6 +68,7 @@ const routes = [
   { path: '/incidencias', name: 'Incidencias', element: Incidencias },
   // { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/sucursales/nuevasucursal', name: 'Colors', element: NuevaSucursales },
+  { path: '/empresas', name: 'Colors', element: Empresas },
   // { path: '/theme/typography', name: 'Typography', element: Typography },
   // { path: '/base', name: 'Base', element: Cards, exact: true },
   // { path: '/base/accordion', name: 'Accordion', element: Accordion },
