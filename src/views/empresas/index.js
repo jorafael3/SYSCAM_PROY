@@ -53,36 +53,58 @@ import {
     cilPlus,
 } from '@coreui/icons'
 import React, { useEffect, useState } from 'react'
-import $, { data } from 'jquery';
 import Service from "../../services/Service"
 import FullScreenSpinner from '../../components/FullScreenSpinner ';
-import 'datatables.net';
+import 'datatables.net-buttons-dt/css/buttons.dataTables.css';
+import $, { data } from 'jquery';
+
+import 'datatables.net'; // DataTables core
+import 'datatables.net-buttons'; // Botones
+
+import jszip from 'jszip'; // Para exportar a Excel
+import 'datatables.net-buttons/js/buttons.html5.min'; // B
 import ReactDOM from 'react-dom/client';
 
 var URL_CARGAR_EMPRESA = '/empresas/cargar_empresa'
 var URL_GUARDAR_NUEVA_EMPRESA = '/empresas/nueva_empresa'
+var URL_GUARDAR_ACTUALIZAR_EMPRESA = '/empresas/actualizar_empresa'
 
 function Empresas() {
     const [visible, setVisible] = useState(false);
     const [EsActualizar, setEsActualizar] = useState(0);
     const [loading, setLoading] = useState(false);
 
+    const [EmpresaID, setEmpresaID] = useState('');
     const [Codigo, setCodigo] = useState('');
+    const [Fecha, setFecha] = useState('');
     const [Nombre, setNombre] = useState('');
     const [Direccion, setDireccion] = useState('');
     const [Telefono, setTelefono] = useState('');
     const [Correo, setCorreo] = useState('');
     const [Encargado, setEncargado] = useState('');
+    const [EmpresaActivo, setEmpresaActivo] = useState('');
+
+    const [CANTIDAD_EMP, setCANTIDAD_EMP] = useState('');
+
 
     useEffect(() => {
         cargar_empresa();
     }, []);
 
+
+    const OnchangeCheckACtivo = (event) => {
+        setEmpresaActivo(event.target.checked ? 1 : 0); // Actualiza el estado del encargado seleccionado
+        console.log('event.target.value: ', event.target.checked);
+    };
+
     const cargar_empresa = async () => {
 
         const datos = await Service.AjaxSendReceive(URL_CARGAR_EMPRESA, []);
         console.log('datos: ', datos);
-        Llenar_Tabla_Empresas(datos.data.data)
+        let DATOS = datos.data.data
+        setCANTIDAD_EMP(DATOS.length);
+        Llenar_Tabla_Empresas(datos.data.data);
+        
     }
 
     function Llenar_Tabla_Empresas(data) {
@@ -96,11 +118,19 @@ function Empresas() {
         let TABLA_ = $('#TABLA_EMPRESAS').DataTable({
             destroy: true,
             data: data,
-            dom: 'frtip',
+            dom: 'Bfrtip',
             paging: false,
             info: false,
-            // buttons: ['colvis', "excel"],
-            // scrollCollapse: true,
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: 'Exportar a Excel',
+                    className: 'btn btn-success',
+                    exportOptions: {
+                        columns: ':visible',
+                    },
+                },
+            ],            // scrollCollapse: true,
             // scrollX: true,
             // columnDefs: [
             //     { width: 100, targets: 0 },
@@ -157,18 +187,18 @@ function Empresas() {
             var data = TABLA_.row(this).data();
             console.log('data: ', data);
 
-            // cargar_encargados();
             setVisible(true);
             setEsActualizar(1);
+            setFecha(data.FECHA_CREADO);
             setCodigo(data.EMPRESA_CODIGO);
-            // setTienda(data.SUCURSAL_ID);
-            // setSucursal(data.SUCURSAL_NOMBRE);
-            // setDireccion(data.SUCURSAL_DIRECCION);
-            // setTelefono(data.SUCURSAL_TELEFONO);
-            // setCorreo(data.SUCURSAL_NOMBRE);
-            // setEncargado(data.SUCURSAL_ENCARGADO);
-            // setID(data.ID);
-            // $("#Sucursal").val(data.SUCURSAL_NOMBRE);
+            setNombre(data.EMPRESA_NOMBRE);
+            setDireccion(data.EMPRESA_DIRECCION);
+            setTelefono(data.EMPRESA_TELEFONO);
+            setCorreo(data.EMPRESA_CORREO);
+            setEncargado(data.EMPRESA_ENCARGADO);
+            setEmpresaID(data.ID);
+            setEmpresaActivo(parseInt(data.ACTIVO) == 1 ? true : false);
+            $("#Sucursal").val(data.SUCURSAL_NOMBRE);
         });
 
     }
@@ -208,10 +238,71 @@ function Empresas() {
 
     }
 
+    const Actualizar_Datos = async () => {
+        let Nombre = $("#Nombre").val();
+        let Direccion = $("#Direccion").val();
+        let Telefono = $("#Telefono").val();
+        let Correo = $("#Correo").val();
+        let Encargado = $("#Encargado").val();
+
+        let param = {
+            EMPRESA_ID: EmpresaID,
+            EMPRESA_NOMBRE: Nombre,
+            EMPRESA_DIRECCION: Direccion,
+            EMPRESA_TELEFONO: Telefono,
+            EMPRESA_CORREO: Correo,
+            EMPRESA_ENCARGADO: Encargado,
+            EMPRESA_ESTADO: EmpresaActivo
+        }
+        console.log('param: ', param);
+
+        setLoading(true);
+        const datos = await Service.AjaxSendReceive(URL_GUARDAR_ACTUALIZAR_EMPRESA, param);
+        console.log('datos: ', datos);
+
+        // if (datos.data.success) {
+        //     $("#EMPRESA").val("");
+        //     $("#Direccion").val("");
+        //     $("#Telefono").val("");
+        //     $("#Correo").val("");
+        //     $("#Encargado").val("");
+        //     Service.Mensaje("Datos Guardados", "", "success");
+        //     Cargar_Datos();
+        // }
+        setLoading(false);
+
+    }
+
 
     return (
         <>
-            <CCard className="mb-4">
+            <CRow>
+                <CCol xs={12} lg={6} xxl={3}>
+                    <div className="card card-flush h-md-50 mb-xl-10">
+                        <div className="card-body d-flex flex-column justify-content-end pe-0">
+                            <h3  className='text-dark'>{CANTIDAD_EMP}</h3>
+                            <span className='text-muted fw-bold'>EMPRESAS</span>
+                        </div>
+                    </div>
+                </CCol>
+                <CCol xs={12} lg={6} xxl={3}>
+                    <div className="card card-flush h-md-50 mb-xl-10">
+                        <div className="card-body d-flex flex-column justify-content-end pe-0">
+                            <h3 id='CANT_INCIDENCIAS' className='text-dark'></h3>
+                            <span className='text-muted fw-bold'>CAMARAS</span>
+                        </div>
+                    </div>
+                </CCol>
+                <CCol xs={12} lg={6} xxl={3}>
+                    <div className="card card-flush h-md-50 mb-xl-10">
+                        <div className="card-body d-flex flex-column justify-content-end pe-0">
+                            <h3 id='CANT_INCIDENCIAS' className='text-dark'></h3>
+                            <span className='text-muted fw-bold'>SUCURSALES</span>
+                        </div>
+                    </div>
+                </CCol>
+            </CRow>
+            <CCard className="mb-4 mt-2">
                 <CCardBody>
                     <CRow>
                         <CCol sm={5}>
@@ -292,7 +383,7 @@ function Empresas() {
                         {
                             EsActualizar == 1 ? (
                                 <div className="mb-3">
-                                    <CFormCheck label="Activo" checked />
+                                    <CFormCheck label="Activo" checked={EmpresaActivo} onChange={OnchangeCheckACtivo} />
                                 </div>
                             ) : ("")
                         }
@@ -309,7 +400,7 @@ function Empresas() {
                             Guardar Datos
                         </CButton>
                     ) : (
-                        <CButton onClick={1} color="warning" className='fw-bold text-light'>
+                        <CButton onClick={Actualizar_Datos} color="warning" className='fw-bold text-light'>
                             Actualizar cambios
                         </CButton>
                     )}

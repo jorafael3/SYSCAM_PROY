@@ -145,7 +145,6 @@ function Incidencias() {
         
 
         const datos = await Service.AjaxSendReceive(URL_CARGAR_INCIDENCIAS, param);
-        
         if (datos.data.success) {
             let info = datos.data.data
             Tabla_incidencias(info)

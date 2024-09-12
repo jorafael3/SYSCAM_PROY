@@ -28,7 +28,7 @@ const login = async (user, password) => {
             user,
             password,
         });
-        console.log('response: ', response);
+        
 
         if (response.data.data.SUCCESS == 1) {
             // Mensaje("")
@@ -42,7 +42,7 @@ const login = async (user, password) => {
             return 0;
         }
     } catch (error) {
-        console.error("Error durante el login:", error);
+        
         throw error;
     }
 };
@@ -68,7 +68,7 @@ function AjaxSendReceiveDatalogin(param, callback) {
             callback(data)
         },
         error: function (error) {
-            console.log('error: ', error);
+            
         }
     });
 }
@@ -76,6 +76,7 @@ function AjaxSendReceiveDatalogin(param, callback) {
 const AjaxSendReceive = async (controller, param) => {
     let DATOS_SESION = getCurrentUser();
     param.DATOS_SESION = DATOS_SESION;
+     
     // const navigate = useNavigate();
     try {
         const response = await axios.post(`${API_URL}${controller}`, param);
@@ -84,7 +85,7 @@ const AjaxSendReceive = async (controller, param) => {
         }
         return response;
     } catch (error) {
-        console.error("Error durante el login:", error);
+        
         Mensaje("Ha ocurrido un error", error, "error")
         // throw error;
     }
@@ -111,7 +112,7 @@ function AjaxSendReceiveData(controller, param, callback) {
             callback(data)
         },
         error: function (error) {
-            console.log('error: ', error);
+            
         }
     });
 }

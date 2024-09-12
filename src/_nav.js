@@ -18,6 +18,7 @@ import {
   cilUser,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
+import Service from "../src/services/Service"
 
 const _nav = [
   {
@@ -60,7 +61,7 @@ const _nav = [
   //   name: 'Components',
   // },
   {
-    component: CNavGroup,
+    component: eval("CNavGroup"),
     name: 'Empresa',
     to: '/empresas',
     icon: <CIcon icon={cilHome} customClassName="nav-icon" />,
@@ -72,7 +73,7 @@ const _nav = [
         // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
       },
       {
-        component: CNavItem,
+        component: (CNavItem),
         name: 'Nueva Sucursal',
         to: '/sucursales/nuevasucursal',
         // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
@@ -82,13 +83,13 @@ const _nav = [
   {
     component: CNavGroup,
     name: 'Usuarios',
-    to: '/sucursales',
+    to: '/usuarios',
     icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
     items: [
       {
         component: CNavItem,
         name: 'Nuevo usuario',
-        to: '/sucursales/nuevasucursal',
+        to: '/usuarios',
         // icon: <CIcon icon={cilDrop} customClassName="nav-icon" />,
       },
     ],
